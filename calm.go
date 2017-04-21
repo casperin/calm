@@ -20,6 +20,45 @@ type Config struct {
 
 type Adapter func(*Config)
 
+// Create new rate limiter. The function takes a number of requests (int), a
+// duration, and any number of adapter functions.
+//
+// Simple example:
+//
+//	func main () {
+//		calmer = calm.New(3, time.Second)
+//		http.HandleFunc("/", calmer(myHandlerFunc))
+//		http.ListenAndServe(":8080", nil)
+//	}
+//
+// To set which methods should be rate limited, how a rate limit should be
+// handled, or how to recognize one user from another you would use an adapter
+// function:
+//
+//	// Rate limit only GET and POST requests
+//	calmer = calm.New(3, time.Second, calm.Methods("GET", "POST"))
+//
+//	// Custom rate limit function
+//	calmer = calm.New(
+//		3,
+//		time.Second,
+//		calm.RateHandler(func(w http.ResponseWriter, r *http.Request) {
+//			w.Write([]byte("Slow down!"))
+//		}),
+//	)
+//
+// They can of course be combined:
+//
+//	calmer = calm.New(
+//		3,
+//		time.Second,
+//		calm.Methods("PUT", "POST"),
+//		calm.RateHandler(func(w http.ResponseWriter, r *http.Request) {
+//			w.Write([]byte("Slow down!"))
+//		}),
+//	)
+//
+// See: RateHandler, Lookup, Methods.
 func New(c int, d time.Duration, adapters ...Adapter) func(http.HandlerFunc) http.HandlerFunc {
 	config := Config{
 		numRequests: c,
